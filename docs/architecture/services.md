@@ -28,3 +28,11 @@
 | | | command | logEvent(eventData) | logs system events | 
 | | | command | logError(eventData) | logs system errors | 
 | | | comamnd | sendNotification(id, message) | sends an error notification to owner | 
+
+## Services 
+
+- Content Mangement Service
+- Authentication Service
+- Analytics Service
+- Logging Service
+- Notification Service
