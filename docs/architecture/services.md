@@ -13,21 +13,21 @@
 
 ## System operations
 
-| Actor | Story | Type | Operation | Description | 
-| ----- | ----- | ---- | --------- | ----------- | 
-| Visitor | view project list | query | getProjectList() | retrieve a list of projects | 
-| Visitor | view project detail | query | getProject(id) | retrieve a project | 
-| Owner | create project | command | createProject(metadata, content) | create a project | 
-| Owner | update project | command | updateProject(id, metadata, content) | update a project | 
-| Owner | delete project | command | deleteProject(id) | delete a project | 
-| Owner | authentication | command | login(credentials) | log the owner into the system | 
-| Owner | authentication | command | logout(id) | log the owner out of the system | 
-| Owner | authentication | command | refresh(refreshToken) | refresh access token | 
-| | | query | getAnalytics() | retrieve web traffic data | 
-| | | command | logAnalytics(eventData) | logs web traffic data | 
-| | | command | logEvent(eventData) | logs system events | 
-| | | command | logError(eventData) | logs system errors | 
-| | | comamnd | sendNotification(id, message) | sends an error notification to owner | 
+| Service      | Actor   | Story               | Type    | Operation                            | Description                          | 
+| ------------ | ------- | ------------------- | ------- | ------------------------------------ | ------------------------------------ | 
+| CMS          | Visitor | view project list   | query   | getProjectList()                     | retrieve a list of projects          | 
+| CMS          | Visitor | view project detail | query   | getProject(id)                       | retrieve a project                   | 
+| CMS          | Owner   | create project      | command | createProject(metadata, content)     | create a project                     | 
+| CMS          | Owner   | update project      | command | updateProject(id, metadata, content) | update a project                     | 
+| CMS          | Owner   | delete project      | command | deleteProject(id)                    | delete a project                     | 
+| Auth         | Owner   | authentication      | command | login(credentials)                   | log the owner into the system        | 
+| Auth         | Owner   | authentication      | command | logout(id)                           | log the owner out of the system      | 
+| Auth         | Owner   | authentication      | command | refresh(refreshToken)                | refresh access token                 | 
+| Analytics    | Owner   | view dashbaord      | query   | getAnalytics()                       | retrieve web traffic data            | 
+| Analytics    | ALL     | view dashbaord      | command | logAnalytics(eventData)              | logs web traffic data                | 
+| Logging      | ALL     | -                   | command | logEvent(eventData)                  | logs system events                   | 
+| Logging      | ALL     | error notification  | command | logError(eventData)                  | logs system errors                   | 
+| Notification | Logging | error notification  | command | sendNotification(id, message)        | sends an error notification to owner | 
 
 ## Services 
 
