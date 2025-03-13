@@ -1,0 +1,431 @@
+# content-management-api.yaml 
+# 
+# This file specifics the RESTful API for Content Mangement Service using Open API Specification 
+# 
+# Resource:
+#   - Project: resource representing a Project object
+#     - metadata: 
+#       - id*: uuid
+#       - title*: string
+#       - description: string
+#       - published*: boolean
+#       - publicationDate: string date
+#       - thumbnail: string uri 
+#     - content: a string of markdown file 
+#
+# URIs:
+#   - /projects: the collection of Project object 
+#   - /projects/{id}: a single Project object 
+# Methods:
+#   - /projects GET: get the list of all Project 
+#   - /projects POST: create a new Project 
+#   - /projects/{id} GET: get a single Project
+#   - /projects/{id} UPDATE: update a single Project
+#   - /projects/{id} DELETE: remove a single Project
+
+openapi: 3.1.1 
+info: 
+  title: Content Mangement Service API
+  version: 1.0.0
+  summary: RESTful API for Content Management Service
+  description: > 
+    This API provides a RESTful interface for managing Project objects. It 
+    supports CRUD operations for creating, retrieving, updating, and deleting 
+    Project objects.
+  termOfService: https://www.{domain}/terms/
+  contact:
+    name: CMS API Support 
+    url: https://www.{domain}/support 
+    email: support@{domain}
+  license: 
+    name: The MIT License
+    identifier: MIT
+    url: https://opensource.org/license/mit
+
+servers: 
+  - url: https://cms.dev.{domain}/v1/ 
+    description: Development server
+  - url: https://cms.staging.{domain}/v1/ 
+    description: Staging server
+  - url: https://cms.{domain}/v1/ 
+    description: Production server
+
+paths: 
+  /projects: 
+    get: 
+      tags: 
+        - CMS 
+      summary: Retrieve a list of Project metadata
+      description: > 
+        This operations returns all Project objects based on the client's access level. 
+        If the User-Role header is set to "Admin" all Projects will be returned. 
+        If the User-Role header is set to "Visitor", only the Projects with field 
+        "published" set to True will be returned. 
+      parameters: 
+        - $ref: '#/components/parameters/AcceptHeader'
+        - $ref: '#/components/parameters/CacheControlHeader'
+        - $ref: '#/components/parameters/UserAgentHeader'
+        - $ref: '#/components/parameters/UserIdHeader'
+        - $ref: '#/components/parameters/UserRoleHeader'
+      responses: 
+        '200': 
+          description: Successfully retrieved the list of Project metadata
+          headers: 
+            Content-Type: 
+              $ref: '#/components/headers/ContentTypeHeader' 
+            Cache-Control: 
+              $ref: '#/components/headers/CacheControlHeader' 
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ProjectList' 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post: 
+      tags: 
+        - CMS 
+      summary: Create a new Project resource
+      parameters: 
+        - $ref: '#/components/parameters/ContentTypeHeader'
+        - $ref: '#/components/parameters/AcceptHeader'
+        - $ref: '#/components/parameters/UserAgentHeader'
+      requestBody: 
+        description: New Project details 
+        required: true 
+        content: 
+          application/json: 
+            schema: 
+              type: object 
+              required: 
+                - title 
+                - published 
+              properties: 
+                title: 
+                  type: string
+                  description: The title of this Project
+                  example: 'Project title' 
+                description: 
+                  type: string 
+                  description: The description of this Project 
+                  example: 'Project description' 
+                published: 
+                  type: boolean 
+                  description: The publication status of this Project 
+                  example: True 
+                publicationDate: 
+                  type: string
+                  format: date 
+                  description: The publication date of this Project 
+                  example: '2022-02-22' 
+                thumbnail: 
+                  type: object 
+                  description: The thumbnail of this Project 
+                  required: 
+                    - altText 
+                    - uri 
+                  properties: 
+                    altText: 
+                      type: string 
+                      description: The alternative text for thumbnail image
+                      example: 'Thumbnail image'
+                    uri: 
+                      type: string
+                      format: uri 
+                      description: The URI of the thumbnail image 
+                      example: 'https://{domain}/image.jpg'
+                content: 
+                  type: string 
+                  description: The Markdown content of this Project resource 
+                  example: 'Project content' 
+                images: 
+                  type: array 
+                  description: An array of image embedded in the content
+                  items: 
+                    type: object
+                    required: 
+                      - altText 
+                      - uri 
+                    properties: 
+                      altText: 
+                        type: string 
+                        description: The alternative text for image
+                        example: 'Image'
+                      uri: 
+                        type: string
+                        format: uri 
+                        description: The URI of the image 
+                        example: 'https://{domain}/image.jpg'
+      responses: 
+        '201': 
+          description: Successfully created a new Project resource 
+          headers: 
+            Location: 
+              description: URI of the newly created Project resource 
+              schema: 
+                type: string
+                format: uri 
+              example: '/projects/0a6b749e-c0e0-4d5a-aaae-968266469721' 
+            Content-Type: 
+              $ref: '#/components/headers/ContentTypeHeader'
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/Project' 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components: 
+  schemas: 
+    ProjectMetadata: 
+      type: object
+      description: The metadata of a Project resource
+      required: 
+        - _links 
+        - id 
+        - title 
+        - published
+      properties: 
+        _links: 
+          type: object 
+          description: Navigational links for this Project resource
+          properties: 
+            self: 
+              type: string
+              format: uri 
+              description: URI to this Project resource 
+              example: 'projects/0a6b749e-c0e0-4d5a-aaae-968266469721'
+            update:
+              type: string
+              format: uri 
+              description: The URI to update this project
+              example: "/projects/0a6b749e-c0e0-4d5a-aaae-968266469721"
+            delete:
+              type: string
+              format: uri 
+              description: The URI to delete this project
+              example: "/projects/0a6b749e-c0e0-4d5a-aaae-968266469721"
+            collection:
+              type: string
+              format: uri 
+              description: The URI to update this project
+              example: "/projects"
+        id: 
+          type: string
+          format: uuid 
+          description: The unique identifier of this Project resource 
+          example: '0a6b749e-c0e0-4d5a-aaae-968266469721' 
+        title: 
+          type: string
+          description: The title of this Project
+          example: 'Project title' 
+        description: 
+          type: string 
+          description: The description of this Project 
+          example: 'Project description' 
+        published: 
+          type: boolean 
+          description: The publication status of this Project 
+          example: True 
+        publicationDate: 
+          type: string
+          format: date 
+          description: The publication date of this Project 
+          example: '2022-02-22' 
+        thumbnail: 
+          type: object 
+          description: The thumbnail of this Project 
+          required: 
+            - altText 
+            - uri 
+          properties: 
+            altText: 
+              type: string 
+              description: The alternative text for thumbnail image
+              example: 'Thumbnail image'
+            uri: 
+              type: string
+              format: uri 
+              description: The URI of the thumbnail image 
+              example: 'https://{domain}/image.jpg'
+
+    Project: 
+      type: object 
+      description: A Project resource 
+      required: 
+        - metadata 
+      properties: 
+        metadata: 
+          $ref: '#/components/schemas/ProjectMetadata' 
+        content: 
+          type: string 
+          description: The Markdown content of this Project resource 
+          example: 'Project content' 
+        images: 
+          type: array 
+          description: An array of image embedded in the content
+          items: 
+            type: object
+            required: 
+              - altText 
+              - uri 
+            properties: 
+              altText: 
+                type: string 
+                description: The alternative text for image
+                example: 'Image'
+              uri: 
+                type: string
+                format: uri 
+                description: The URI of the image 
+                example: 'https://{domain}/image.jpg'
+
+    ProjectList: 
+      type: object
+      description: An array of Project metadata with navigational links
+      required: 
+        - _links 
+        - projects
+      properties: 
+        _links: 
+          type: object
+          descriptions: Navigational links for the Project list resource
+          properties: 
+            self: 
+              type: string 
+              format: uri 
+              description: URI to this Project list resource 
+              example: '/projects' 
+        projects: 
+          $ref: '#/components/schemas/ProjectMetadata' 
+
+  responses: 
+    BadRequestError: 
+      description: Bad Request - The request was malformed or contained invalid data
+      content: 
+        application/json: 
+          schema: 
+            type: object 
+            properties: 
+              code: 
+                type: integer 
+                description: The HTTP status code associated with this error 
+                example: 400 
+              message: 
+                type: string 
+                description: The error message 
+                example: 'Bad Request: Missing required header "User-Role".'
+      
+    NotFoundError: 
+      description: Not Found - The requested resource could not be found
+      content: 
+        application/json: 
+          schema: 
+            type: object 
+            properties: 
+              code: 
+                type: integer 
+                description: The HTTP status code associated with this error 
+                example: 404
+              message: 
+                type: string 
+                description: The error message 
+                example: 'Not Found: The requested resource could not be found.'
+
+    InternalServerError: 
+      description:  Internal Server Error - An unexpected error occurred
+      content: 
+        application/json: 
+          schema: 
+            type: object 
+            properties: 
+              code: 
+                type: integer 
+                description: The HTTP status code associated with this error 
+                example: 500
+              message: 
+                type: string 
+                description: The error message 
+                example: 'Internal Server Error: An unexpected error occurred on the server.'
+
+  parameters:
+    AcceptHeader: 
+      name: Accept 
+      in: header
+      description: Specifies the desired response format 
+      required: false 
+      schema: 
+        type: string 
+      example: application/json
+
+    CacheControlHeader: 
+      name: Cache-Control 
+      in: header 
+      description: Instructs caches how to handle the request 
+      required: false 
+      schema: 
+        type: string 
+      exampel: no-cache
+
+    UserAgentHeader: 
+      name: User-Agent 
+      in: header 
+      description: Identifies the client application for logging and analytics 
+      required: false 
+      schema: 
+        type: string 
+      example: PersonalWebsite/1.0 
+
+    ContentTypeHeader: 
+      name: Content-Type 
+      in: header 
+      description: Indicates the media type of the request body 
+      required: false 
+      schema: 
+        type: string 
+      example: application/json 
+
+    UserIdHeader: 
+      name: User-Id
+      in: header
+      description: Specifies the unique identifier of the admin user
+      required: false 
+      schema: 
+        type: string 
+        format: uuid
+      example: "86796e70-f629-48b7-b68e-9be530fe9fdf"
+
+    UserRoleHeader: 
+      name: User-Role 
+      in: header 
+      description: Specifies the role of the client user
+      required: true 
+      schema: 
+        type: string
+      example: Admin 
+
+  headers: 
+    ContentTypeHeader: 
+      description: Specifies the media type of the response 
+      schema: 
+        type: string 
+      example: application/json 
+
+    CacheControlHeader: 
+      description: Define cahing policies for the response 
+      schema: 
+        type: string 
+      example: "max-age=3600, public" 
+
