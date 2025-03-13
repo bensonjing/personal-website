@@ -61,6 +61,7 @@ paths:
         If the User-Role header is set to "Admin" all Projects will be returned. 
         If the User-Role header is set to "Visitor", only the Projects with field 
         "published" set to True will be returned. 
+      operationId: getProjectList
       parameters: 
         - $ref: '#/components/parameters/AcceptHeader'
         - $ref: '#/components/parameters/CacheControlHeader'
@@ -75,6 +76,8 @@ paths:
               $ref: '#/components/headers/ContentTypeHeader' 
             Cache-Control: 
               $ref: '#/components/headers/CacheControlHeader' 
+            ETag: 
+              $ref: '#/components/headers/ETagHeader'
           content: 
             application/json: 
               schema: 
@@ -92,6 +95,7 @@ paths:
       tags: 
         - CMS 
       summary: Create a new Project resource
+      operationId: createProject
       parameters: 
         - $ref: '#/components/parameters/ContentTypeHeader'
         - $ref: '#/components/parameters/AcceptHeader'
@@ -102,66 +106,11 @@ paths:
         content: 
           application/json: 
             schema: 
-              type: object 
-              required: 
-                - title 
-                - published 
-              properties: 
-                title: 
-                  type: string
-                  description: The title of this Project
-                  example: 'Project title' 
-                description: 
-                  type: string 
-                  description: The description of this Project 
-                  example: 'Project description' 
-                published: 
-                  type: boolean 
-                  description: The publication status of this Project 
-                  example: True 
-                publicationDate: 
-                  type: string
-                  format: date 
-                  description: The publication date of this Project 
-                  example: '2022-02-22' 
-                thumbnail: 
-                  type: object 
-                  description: The thumbnail of this Project 
-                  required: 
-                    - altText 
-                    - uri 
-                  properties: 
-                    altText: 
-                      type: string 
-                      description: The alternative text for thumbnail image
-                      example: 'Thumbnail image'
-                    uri: 
-                      type: string
-                      format: uri 
-                      description: The URI of the thumbnail image 
-                      example: 'https://{domain}/image.jpg'
-                content: 
-                  type: string 
-                  description: The Markdown content of this Project resource 
-                  example: 'Project content' 
-                images: 
-                  type: array 
-                  description: An array of image embedded in the content
-                  items: 
-                    type: object
-                    required: 
-                      - altText 
-                      - uri 
-                    properties: 
-                      altText: 
-                        type: string 
-                        description: The alternative text for image
-                        example: 'Image'
-                      uri: 
-                        type: string
-                        format: uri 
-                        description: The URI of the image 
-                        example: 'https://{domain}/image.jpg'
+              allOf: 
+                - $ref: '#/components/schemas/ProjectInput' 
+                - required: 
+                  - title 
+                  - published 
       responses: 
         '201': 
           description: Successfully created a new Project resource 
@@ -174,10 +123,113 @@ paths:
               example: '/projects/0a6b749e-c0e0-4d5a-aaae-968266469721' 
             Content-Type: 
               $ref: '#/components/headers/ContentTypeHeader'
+            ETag: 
+              $ref: '#/components/headers/ETagHeader'
           content: 
             application/json: 
               schema: 
                 $ref: '#/components/schemas/Project' 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /projects/{id}: 
+    get: 
+      tags: 
+        - CMS
+      summary: Retrieve a Project resource based on id 
+      description: > 
+        This operations returns Project object based on the client's access level. 
+        If the User-Role header is set to "Admin", the requested Project will be returned. 
+        If the User-Role header is set to "Visitor", only if the requested Projects with field 
+        "published" set to True will be returned. 
+      operationId: getProject
+      parameters: 
+        - $ref: '#/components/parameters/AcceptHeader'
+        - $ref: '#/components/parameters/CacheControlHeader'
+        - $ref: '#/components/parameters/UserAgentHeader'
+        - $ref: '#/components/parameters/UserIdHeader'
+        - $ref: '#/components/parameters/UserRoleHeader'
+      responses: 
+        '200': 
+          description: Successfully retrieved the Project resource with id
+          headers: 
+            Content-Type: 
+              $ref: '#/components/headers/ContentTypeHeader' 
+            Cache-Control: 
+              $ref: '#/components/headers/CacheControlHeader' 
+            ETag: 
+              $ref: '#/components/headers/ETagHeader'
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/Project' 
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch: 
+      tags: 
+        - CMS 
+      summary: Partial update of the Project resource 
+      description: Only the provided field in request body will be updated 
+      operationId: updateProject 
+      parameters: 
+        - $ref: '#/components/parameters/ContentTypeHeader'
+        - $ref: '#/components/parameters/AcceptHeader'
+        - $ref: '#/components/parameters/UserAgentHeader'
+      requestBody: 
+        description: Update Project detail 
+        required: true 
+        content: 
+          application/json: 
+            schema: 
+              $ref: '#/components/schemas/ProjectInput' 
+      responses: 
+        '200': 
+          description: Successfully updated the Project resource 
+          headers: 
+            Content-Type: 
+              $ref: '#/components/headers/ContentTypeHeader'
+            ETag: 
+              $ref: '#/components/headers/ETagHeader'
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/Project' 
+        '204':
+          description: Successfully updated the Project resource, no content returned
+
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete: 
+      tags: 
+        - CMS 
+      summary: Delete a Project resource 
+      operationId: deleteProject 
+      parameters: 
+        - $ref: '#/components/parameters/UserAgentHeader'
+      responses: 
+        '204': 
+          description: Successfully deleted the Project resource
+
         '400':
           $ref: '#/components/responses/BadRequestError'
 
@@ -311,6 +363,65 @@ components:
         projects: 
           $ref: '#/components/schemas/ProjectMetadata' 
 
+    ProjectInput: 
+      type: object 
+      properties: 
+        title: 
+          type: string
+          description: The title of this Project
+          example: 'Project title' 
+        description: 
+          type: string 
+          description: The description of this Project 
+          example: 'Project description' 
+        published: 
+          type: boolean 
+          description: The publication status of this Project 
+          example: True 
+        publicationDate: 
+          type: string
+          format: date 
+          description: The publication date of this Project 
+          example: '2022-02-22' 
+        thumbnail: 
+          type: object 
+          description: The thumbnail of this Project 
+          required: 
+            - altText 
+            - uri 
+          properties: 
+            altText: 
+              type: string 
+              description: The alternative text for thumbnail image
+              example: 'Thumbnail image'
+            uri: 
+              type: string
+              format: uri 
+              description: The URI of the thumbnail image 
+              example: 'https://{domain}/image.jpg'
+        content: 
+          type: string 
+          description: The Markdown content of this Project resource 
+          example: 'Project content' 
+        images: 
+          type: array 
+          description: An array of image embedded in the content
+          items: 
+            type: object
+            required: 
+              - altText 
+              - uri 
+            properties: 
+              altText: 
+                type: string 
+                description: The alternative text for image
+                example: 'Image'
+              uri: 
+                type: string
+                format: uri 
+                description: The URI of the image 
+                example: 'https://{domain}/image.jpg'
+
   responses: 
     BadRequestError: 
       description: Bad Request - The request was malformed or contained invalid data
@@ -414,7 +525,9 @@ components:
       required: true 
       schema: 
         type: string
-      example: Admin 
+      enum: 
+        - Admin 
+        - Visitor
 
   headers: 
     ContentTypeHeader: 
@@ -429,3 +542,8 @@ components:
         type: string 
       example: "max-age=3600, public" 
 
+    ETagHeader: 
+      description: Entity tag for versioning the resource 
+      schema: 
+        type: string 
+      example: "33a64df551425fcc55e4d42a148795d9f25f89d4"
