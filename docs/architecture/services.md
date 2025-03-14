@@ -51,8 +51,9 @@
   - PATCH /cms/project/{id} 
   - DELETE /cms/project/{id} 
 - Analytics Service: 
-  - getAnalytics(): retrieve real-time analytics data using gRPC streaming 
-  - logAnalytics(): log an events using asynchronous messaging API 
+  - getRealTimeAnalytics(): retrieve real-time analytics data using server streaming gRPC
+  - getHistoryAnalytics(): retrieve historial analytics data up to 24 months using uniary gRPC
+  - logAnalytics(): log an events using asynchronous messaging API - RabbitMQ
 - Notification Service: 
   - sendNotification: asynchronous one-way notification API (The notification in API name means the notificatin sends to the owner. The one-way notification means how other services call Notification service. they does not represent the same thing)
 - API Gateway: synchronous request/response - GraphQL

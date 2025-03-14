@@ -1,0 +1,73 @@
+/**
+ * analytics-api.proto
+ * 
+ * Protocal Buffer definition for the Analytics Service API
+ * The Analytics Service provides real-time and historical analytics data for website traffic monitoring. It offers two main endpoints: 
+ * 1. GetRealTimeAnalytics: Retrieves real-time analytics data for the current time period
+ * 2. GetHistoryAnalytics: Retrieves historical analytics data for different time periods
+ */
+
+syntax = "proto3";
+
+package analytics.v1;
+
+service AnalyticsService {
+  rpc GetRealTimeAnalytics(RealTimeRequest) returns (stream RealTimeResponse) {}
+  rpc GetHistoryAnalytics(HistoryRequest) returns (stream HistoryResponse) {}
+}
+
+message RealTimeRequest {
+  int32 update_interval = 1; // Refresh interval in seconds (default: 5s) 
+}
+
+message RealTimeResponse {
+  string timestamp = 1; // Timestamp of the data point 
+  int32 visitors = 2; // Number of visitors
+  int32 page_views = 3; // Page views 
+  float bounce_rate = 4; // Bounce rate
+} 
+
+message HistoryRequest {
+  enum TimePreset {
+    LAST_24_HOURS = 0;
+    LAST_7_DAYS = 1;
+    LAST_30_DAYS = 2;
+    LAST_3_MONTHS = 3;
+    LAST_12_MONTHS = 4;
+    LAST_24_MONTHS = 5;
+  }
+
+  TimePreset time_preset = 1;
+
+  int32 page_size = 2; // Number of data points on each page 
+  string page_token = 3; // Token to fetch the next page of data 
+}
+
+message HistoryResponse {
+  Metadata metadata = 1;
+  repeated HistoryAnalytics history_analytics = 2; 
+  OverviewMetrics overview_metrics = 3; 
+  string next_page_token = 4; 
+  bool has_more_page = 5; 
+} 
+
+message HistoryAnalytics {
+  string timestamp = 1; // ISO 8601 Timestamp of the data point 
+  int32 visitors = 2; // Number of visitors
+  int32 page_views = 3; // Page views 
+  float bounce_rate = 4; // Bounce rate
+  float avg_session_duration = 5; // Average session duration
+} 
+
+message OverviewMetrics {
+  int32 total_visitors = 1; 
+  int32 total_page_views = 2; 
+  float avg_bounce_rate = 3; 
+  float avg_session_duration = 4; 
+  int32 total_sessions = 5; 
+  float pages_per_session = 6; 
+} 
+
+message Metadata {
+  string request_timestamp = 1; // When was the request made 
+} 
