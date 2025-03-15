@@ -1,0 +1,169 @@
+asyncapi: 3.0.0 
+info: 
+  title: Analytics Service Event Logging API 
+  version: 1.0.0 
+  description: > 
+    This API allows API Gateway to publish analytics event to the Analytics Service using RabbitMQ 
+  termsOfService: https://www.{server}/terms 
+  contact: 
+    name: API Support 
+    url: https://www.{server}/support 
+    email: support@{server}
+  license: 
+    name: MIT 
+    url: https://opensource.org/licenses/MIT  
+  tags: 
+    - name: Analytics 
+      description: Analytics related endpoints 
+    - name: Events 
+      description: Event logging endpoints  
+
+servers: 
+  production: 
+    host: rabbitmq.{server}
+    title: Production Analytics server
+    protocol: amqp 
+  staging: 
+    host: rabbitmq.staging.{server}
+    title: Staging Analytics server
+    protocol: amqp 
+  development: 
+    host: rabbitmq.dev.{server}
+    title: Development Analytics server
+    protocol: amqp 
+
+channels: 
+  analytics-event: 
+    address: analytics.events.v1
+    title: Channel for publishing analytics events 
+    messages: 
+      analyticsEvent: 
+        $ref: '#/components/messages/analyticsEvent'
+    bindings: 
+      amqp: 
+        exchange: 
+          name: analytics
+          type: topic 
+          durable: true 
+          autoDelete: false 
+        bindingVersion: 1.0.0 
+
+operations: 
+  logAnalyticsEvent: 
+    action: recieve 
+    channel: 
+      $ref: '#/channels/analytics-event' 
+    title: Process incoming analytics events 
+
+components: 
+  messages: 
+    analyticsEvent: 
+      name: AnalyticsEvent 
+      title: Analytics Event 
+      summary: Represents an analytics event 
+      contentType: application/json 
+      headers: 
+        type: object 
+        properties: 
+          event-type: 
+            type: string 
+            enum: [PAGE_VIEW, CLICK, SCROLL, CUSTOM]
+          timestamp: 
+            type: string 
+            format: date-time 
+      payload: 
+        type: object 
+        required: 
+          - eventId
+          - timestamp 
+          - eventType 
+          - visitorHash 
+          - pageData 
+        properties: 
+          eventId: 
+            type: string 
+            format: uuid 
+            description: Unique identifier for the event 
+          timestamp: 
+            type: string
+            format: date-time 
+            description: Timestamp of the event 
+          eventType: 
+            type: string 
+            enum: [PAGE_VIEW, CLICK, SCROLL, CUSTOM]
+            description: Type of analytics event 
+          visitorHash: 
+            type: string 
+            description: Daily identifier for the visitor 
+          sessionId: 
+            type: string 
+            description: Session identifier 
+
+          pageData: 
+            type: object 
+            required: 
+              - path 
+            properties: 
+              path: 
+                type: string 
+                format: uri 
+                description: URL path of the page 
+              referrer: 
+                type: string 
+                format: uri 
+                description: URL of the referrer 
+              loadTime: 
+                type: integer 
+                description: Page load time in milliseconds 
+              viewport: 
+                type: object 
+                description: Dimensions of the viewport 
+                properties: 
+                  width: 
+                    type: integer 
+                  height: 
+                    type: integer 
+          
+          deviceData: 
+            type: object 
+            description: Device information 
+            properties: 
+              type: 
+                type: string 
+                enum: [DESKTOP, MOBILE, TABLET, OTHER] 
+                description: Type of device 
+              browser: 
+                type: string
+                description: Browser information 
+              os: 
+                type: string 
+                description: Operating system 
+          
+          ipAddress:
+            type: string 
+            format: ipv4 
+            description: IP address of the visitor 
+
+          geoLocation: 
+            type: object 
+            description: Geographical location of the visitor 
+            properties: 
+              country: 
+                type: string 
+                description: Country of the visitor (ISO 3166-1 alpha-2) 
+              region: 
+                type: string 
+                description: Region or state of the visitor 
+              city: 
+                type: string 
+                description: City of the visitor 
+              
+          customData: 
+            type: object 
+            description: Custom data associated with the event 
+            additionalProperties: true 
+
+      bindings: 
+        amqp: 
+          contentEncoding: utf-8 
+          bindingVersion: 1.0.0 
