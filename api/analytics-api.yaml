@@ -43,7 +43,7 @@ channels:
       amqp: 
         exchange: 
           name: analytics
-          type: topic 
+          type: fanout 
           durable: true 
           autoDelete: false 
         bindingVersion: 1.0.0 
