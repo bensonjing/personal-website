@@ -28,6 +28,8 @@
 | API Gateway  | Owner   | authentication      | command | refresh(refreshToken)                | refresh access token                 | 
 | API Gateway  | ALL     | -                   | command | logEvent(eventData)                  | logs system events                   | 
 | API Gateway  | ALL     | error notification  | command | logError(eventData)                  | logs system errors                   | 
+| API Gateway  | Owner   | health status       | query   | getStatus()                          | return health status of the Gateway  | 
+| API Gateway  | Owner   | monitoring          | query   | getMetrics()                         | return metric on API usage and perf  | 
 
 ## Services 
 - Content Mangement Service
@@ -40,3 +42,31 @@
   - Caching
   - Metrics collection
   - Request logging
+
+## API 
+- Content Management Service: synchronous request/response - RESTful API 
+  - GET /cms/project 
+  - GET /cms/project/{id} 
+  - POST /cms/project 
+  - PATCH /cms/project/{id} 
+  - DELETE /cms/project/{id} 
+- Analytics Service: 
+  - getRealTimeAnalytics(): retrieve real-time analytics data using server streaming gRPC
+  - getHistoryAnalytics(): retrieve historial analytics data up to 24 months using uniary gRPC
+  - logAnalytics(): log an events using asynchronous messaging API - RabbitMQ
+- Notification Service: 
+  - sendNotification: asynchronous one-way notification API (The notification in API name means the notificatin sends to the owner. The one-way notification means how other services call Notification service. they does not represent the same thing)
+- API Gateway: synchronous request/response - GraphQL
+<!-- TODO: rewrite those endpoint definition using GraphQL -->
+  - GET /status 
+  - GET /metrics 
+  - GET /cms/project 
+  - GET /cms/project/{id} 
+  - POST /cms/project 
+  - PATCH /cms/project/{id} 
+  - DELETE /cms/project/{id} 
+  - POST /auth/login
+  - POST /auth/logout
+  - POST /auth/refresh
+  - POST /analytics/log
+  - GET /analytics
