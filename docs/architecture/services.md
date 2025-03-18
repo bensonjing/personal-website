@@ -55,7 +55,7 @@
   - getHistoryAnalytics(): retrieve historial analytics data up to 24 months using uniary gRPC
   - logAnalytics(): log an events using asynchronous messaging API - Kafka
 - Notification Service: 
-  - sendNotification: asynchronous one-way notification API (The notification in API name means the notificatin sends to the owner. The one-way notification means how other services call Notification service. they does not represent the same thing)
+  - sendNotification: send website owner an email when an error event is sent to Notification Service - Kafka 
 - API Gateway: synchronous request/response - GraphQL
 <!-- TODO: rewrite those endpoint definition using GraphQL -->
   - GET /status 

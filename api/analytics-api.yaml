@@ -19,39 +19,44 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
     identifier: MIT
-  servers: 
-    development: 
-      host: dev.kafka.v1.{server}
-      description: Development Kafka broker 
-      protocol: kafka
-    staging: 
-      host: staging.kafka.v1.{server}
-      description: Staging Kafka broker 
-      protocol: kafka
-    production: 
-      host: kafka.v1.{server}
-      description: Production Kafka broker 
-      protocol: kafka
+
+servers: 
+  development: 
+    url: dev.kafka.v1.{server}
+    description: Development Kafka broker 
+    protocol: kafka
+  staging: 
+    url: staging.kafka.v1.{server}
+    description: Staging Kafka broker 
+    protocol: kafka
+  production: 
+    url: kafka.v1.{server}
+    description: Production Kafka broker 
+    protocol: kafka
 
 channels: 
   analytics-events: 
     subscribe: 
       title: Analytics Event 
       description: Analytics event consumed from Kafka broker sent by API Gateway 
-      address: analytics-events
       messages: 
         analyticsEvent: 
           $ref: '#/components/messages/AnalyticsEvent' 
+    bindings: 
+      kafka: 
+        topic: analytics-events
 
   analytics-realtime: 
     publish: 
       title: Analytics Realtime 
       description: Realtime analytics data sent to Kafka broker and consumed by API Gateway 
-      address: analytics-realtime
       messages: 
         realtimeAnalytics: 
           $ref: '#/components/messages/RealtimeAnalytics'
-      
+    bindings: 
+      kafka: 
+        topic: analytics-realtime
+
 components: 
   messages: 
     AnalyticsEvent: 
@@ -118,6 +123,9 @@ components:
           visitors: 
             type: integer 
             description: Number of unique visitors currently on website 
+          pageViews: 
+            type: integer 
+            description: Number of page views currently active on website 
           bounceRate: 
             type: number 
             format: float 
