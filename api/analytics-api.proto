@@ -1,10 +1,9 @@
 /**
  * analytics-api.proto
  * 
- * Protocal Buffer definition for the Analytics Service API
- * The Analytics Service provides real-time and historical analytics data for website traffic monitoring. It offers two main endpoints: 
- * 1. GetRealTimeAnalytics: Retrieves real-time analytics data for the current time period
- * 2. GetHistoryAnalytics: Retrieves historical analytics data for different time periods
+ * Protocal Buffer definition for the Analytics Service API: 
+ * 1. GetHistoryAnalytics: Retrieves historical analytics data for different time periods
+ * This API utilized unary gRPC
  */
 
 syntax = "proto3";
@@ -12,20 +11,8 @@ syntax = "proto3";
 package analytics.v1;
 
 service AnalyticsService {
-  rpc GetRealTimeAnalytics(RealTimeRequest) returns (stream RealTimeResponse) {}
-  rpc GetHistoryAnalytics(HistoryRequest) returns (stream HistoryResponse) {}
+  rpc GetHistoryAnalytics(HistoryRequest) returns (HistoryResponse) {}
 }
-
-message RealTimeRequest {
-  int32 update_interval = 1; // Refresh interval in seconds (default: 5s) 
-}
-
-message RealTimeResponse {
-  string timestamp = 1; // Timestamp of the data point 
-  int32 visitors = 2; // Number of visitors
-  int32 page_views = 3; // Page views 
-  float bounce_rate = 4; // Bounce rate
-} 
 
 message HistoryRequest {
   enum TimePreset {

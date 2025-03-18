@@ -1,169 +1,124 @@
-asyncapi: 3.0.0 
+# analytics-api.yaml
+#
+# This file defines the AsyncAPI specification for Analytics APIs.
+# 1. logEvent: Log user interaction events (page views, clicks, scrolls)
+# 2. getRealtimeAnalytics: Get real-time analytics data (visitors, page views, bounce rate)
+# Both APIs are Kafka-based
+
+asyncapi: 3.0.0
 info: 
-  title: Analytics Service Event Logging API 
+  title: Analytics API
   version: 1.0.0 
-  description: > 
-    This API allows API Gateway to publish analytics event to the Analytics Service using RabbitMQ 
-  termsOfService: https://www.{server}/terms 
+  description: Kafka-based analytics API for receiving Analytics events and returning real-time analytics data 
+  termsOfService: https://www.{server}/terms
   contact: 
-    name: API Support 
-    url: https://www.{server}/support 
+    name: API Support
+    url: https://www.{server}/support
     email: support@{server}
   license: 
-    name: MIT 
-    url: https://opensource.org/licenses/MIT  
-  tags: 
-    - name: Analytics 
-      description: Analytics related endpoints 
-    - name: Events 
-      description: Event logging endpoints  
-
-servers: 
-  production: 
-    host: rabbitmq.{server}
-    title: Production Analytics server
-    protocol: amqp 
-  staging: 
-    host: rabbitmq.staging.{server}
-    title: Staging Analytics server
-    protocol: amqp 
-  development: 
-    host: rabbitmq.dev.{server}
-    title: Development Analytics server
-    protocol: amqp 
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+    identifier: MIT
+  servers: 
+    development: 
+      host: dev.kafka.v1.{server}
+      description: Development Kafka broker 
+      protocol: kafka
+    staging: 
+      host: staging.kafka.v1.{server}
+      description: Staging Kafka broker 
+      protocol: kafka
+    production: 
+      host: kafka.v1.{server}
+      description: Production Kafka broker 
+      protocol: kafka
 
 channels: 
-  analytics-event: 
-    address: analytics.events.v1
-    title: Channel for publishing analytics events 
-    messages: 
-      analyticsEvent: 
-        $ref: '#/components/messages/analyticsEvent'
-    bindings: 
-      amqp: 
-        exchange: 
-          name: analytics
-          type: fanout 
-          durable: true 
-          autoDelete: false 
-        bindingVersion: 1.0.0 
+  analytics-events: 
+    subscribe: 
+      title: Analytics Event 
+      description: Analytics event consumed from Kafka broker sent by API Gateway 
+      address: analytics-events
+      messages: 
+        analyticsEvent: 
+          $ref: '#/components/messages/AnalyticsEvent' 
 
-operations: 
-  logAnalyticsEvent: 
-    action: recieve 
-    channel: 
-      $ref: '#/channels/analytics-event' 
-    title: Process incoming analytics events 
-
+  analytics-realtime: 
+    publish: 
+      title: Analytics Realtime 
+      description: Realtime analytics data sent to Kafka broker and consumed by API Gateway 
+      address: analytics-realtime
+      messages: 
+        realtimeAnalytics: 
+          $ref: '#/components/messages/RealtimeAnalytics'
+      
 components: 
   messages: 
-    analyticsEvent: 
-      name: AnalyticsEvent 
+    AnalyticsEvent: 
+      name: AnalyticsEvent
       title: Analytics Event 
-      summary: Represents an analytics event 
-      contentType: application/json 
-      headers: 
-        type: object 
-        properties: 
-          event-type: 
-            type: string 
-            enum: [PAGE_VIEW, CLICK, SCROLL, CUSTOM]
-          timestamp: 
-            type: string 
-            format: date-time 
+      summary: Analytics event consumed from Kafka broker sent by API Gateway 
+      contentType: application/json
       payload: 
         type: object 
         required: 
-          - eventId
+          - eventId 
           - timestamp 
           - eventType 
-          - visitorHash 
-          - pageData 
+          - pageUrl 
         properties: 
           eventId: 
             type: string 
             format: uuid 
             description: Unique identifier for the event 
           timestamp: 
-            type: string
+            type: string 
             format: date-time 
             description: Timestamp of the event 
+          userId: 
+            type: string 
+            format: uuid 
+            description: User ID associated with the event 
           eventType: 
             type: string 
-            enum: [PAGE_VIEW, CLICK, SCROLL, CUSTOM]
-            description: Type of analytics event 
-          visitorHash: 
+            enum: [PAGE_VIEW, CLICK, SCROLL]
+            description: Type of user interaction event 
+          pageUrl: 
             type: string 
-            description: Daily identifier for the visitor 
-          sessionId: 
+            format: uri 
+            description: URL of the page where the event occurred 
+          referrer: 
             type: string 
-            description: Session identifier 
-
-          pageData: 
-            type: object 
-            required: 
-              - path 
-            properties: 
-              path: 
-                type: string 
-                format: uri 
-                description: URL path of the page 
-              referrer: 
-                type: string 
-                format: uri 
-                description: URL of the referrer 
-              loadTime: 
-                type: integer 
-                description: Page load time in milliseconds 
-              viewport: 
-                type: object 
-                description: Dimensions of the viewport 
-                properties: 
-                  width: 
-                    type: integer 
-                  height: 
-                    type: integer 
+            format: uri 
+            description: URL of the page that referred the user to the current page 
+          userAgent: 
+            type: string 
+            description: Browser and device information 
+          ipAddress: 
+            type: string 
+            description: IP address of the user 
           
-          deviceData: 
-            type: object 
-            description: Device information 
-            properties: 
-              type: 
-                type: string 
-                enum: [DESKTOP, MOBILE, TABLET, OTHER] 
-                description: Type of device 
-              browser: 
-                type: string
-                description: Browser information 
-              os: 
-                type: string 
-                description: Operating system 
-          
-          ipAddress:
-            type: string 
-            format: ipv4 
-            description: IP address of the visitor 
-
-          geoLocation: 
-            type: object 
-            description: Geographical location of the visitor 
-            properties: 
-              country: 
-                type: string 
-                description: Country of the visitor (ISO 3166-1 alpha-2) 
-              region: 
-                type: string 
-                description: Region or state of the visitor 
-              city: 
-                type: string 
-                description: City of the visitor 
-              
-          customData: 
-            type: object 
-            description: Custom data associated with the event 
-            additionalProperties: true 
-
-      bindings: 
-        amqp: 
-          contentEncoding: utf-8 
-          bindingVersion: 1.0.0 
+    RealtimeAnalytics: 
+      name: RealtimeAnalytics
+      title: Realtime Analytics 
+      summary: Realtime analytics data sent to Kafka broker and consumed by API Gateway 
+      contentType: application/json
+      payload: 
+        type: object 
+        required: 
+          - timestamp 
+          - visitors 
+          - pageViews 
+          - bounceRate  
+        properties:
+          timestamp:
+            type: string
+            format: date-time
+            description: Timestamp of this analytics data point 
+          visitors: 
+            type: integer 
+            description: Number of unique visitors currently on website 
+          bounceRate: 
+            type: number 
+            format: float 
+            description: Percentage of visitors who land on a page and leave without taking any further action 
