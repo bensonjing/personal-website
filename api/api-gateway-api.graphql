@@ -9,7 +9,7 @@ type Query {
   metrics: Metrics!
   projects: [Project!]! 
   project(id: ID!): Project 
-  historyAnalytics(timePreset: TimePreset!, pageSize: Int, pageToken: String): HistoryAnalytics!
+  historyAnalytics(timePreset: TimePreset!, pageSize: Int, pageToken: String): HistoryAnalyticsPayload!
 }
 
 type Mutation {
@@ -17,15 +17,25 @@ type Mutation {
   updateProject(id: ID!, input: UpdateProjectInput!): ProjectPayload!
   deleteProject(id: ID!): DeleteProjectPayload!
 
-  login(input: LoginInput!): LoginPayload!
+  login(input: LoginInput!): AuthPayload!
   logout: LogoutPayload!
+  refreshToken(refreshToken: String!): RefreshTokenPayload!
 
   logAnalyticsEvent(input: LogAnalyticsEventInput!): LogAnalyticsEventPayload!
+  reportServiceError(input: ReportServiceErrorInput!): ReportServiceErrorPayload!
 }
 
 type Subscription {
-  realtimeAnalyticsUpdated(): RealtimeAnalyticsPayload!
-  serviceErrorOccurred(): ServiceErrorPayload!
+  realtimeAnalyticsUpdated: RealtimeAnalyticsPayload!
+}
+
+enum TimePreset {
+  LAST_24_HOURS
+  LAST_7_DAYS
+  LAST_30_DAYS
+  LAST_3_MONTHS
+  LAST_12_MONTHS
+  LAST_24_MONTHS
 }
 
 """
@@ -66,6 +76,7 @@ type KafkaServiceStatus implements ServiceStatus {
   name: String!
   status: SystemStatus!
   protocol: Protocol! 
+  uptime: String! # Time since last restart ex. "72h" 
   kafkaStatus: SystemStatus!
   consumerLag: Int! # Number of unconsumed messages in Kafka topic 
 } 
@@ -75,6 +86,12 @@ type GRPCServiceStatus implements ServiceStatus {
   status: SystemStatus!
   protocol: Protocol! 
 } 
+
+enum Protocol {
+  REST
+  GRPC
+  KAFKA
+}
 
 """
 Metrics endpoint to monitor system performance 
@@ -110,10 +127,11 @@ type ServiceMetrics {
   errorRate: Float! # Error rate percentage 
   requestRate: Float! # Requests per second 
   activeConnections: Int! # Number of active connections 
+  uptime: String! # Time since last restart ex. "72h" 
 }
 
 """
-Project resource 
+Content Management Service 
 """
 type Project {
   id: ID!
@@ -131,14 +149,29 @@ type Image {
   altText: String
 }
 
-input ProjectInput {
+input CreateProjectInput {
   title: String!
   description: String
   published: Boolean! 
   publicationDate: String
-  thumbnail: Image 
+  thumbnail: ImageInput
   content: String 
-  images: [Image!]!
+  images: [ImageInput!]!
+}
+
+input UpdateProjectInput {
+  title: String
+  description: String
+  published: Boolean
+  publicationDate: String
+  thumbnail: ImageInput
+  content: String
+  images: [ImageInput!]
+} 
+
+input ImageInput {
+  url: String!
+  altText: String
 }
 
 type ProjectPayload {
@@ -152,6 +185,120 @@ type DeleteProjectPayload {
   success: Boolean!
   message: String
   id: ID 
+  errors: [Error!]
+} 
+
+"""
+Authentication
+"""
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type AuthPayload {
+  success: Boolean!
+  message: String
+  accessToken: String
+  refreshToken: String
+  expiresIn: Int # Seconds until expiration
+  tokenType: String # "Bearer"
+  user: User
+  errors: [Error!]
+}
+
+type LogoutPayload {
+  success: Boolean!
+  message: String
+  errors: [Error!]
+}
+
+type User {
+  id: ID!
+  email: String!
+  role: UserRole!
+  name: String
+}
+
+enum UserRole {
+  ADMIN
+  VISITOR
+}
+
+"""
+Analytics
+""" 
+type HistoryAnalyticsPayload {
+  metadata: AnalyticsMetadata! 
+  historyAnalytics: [HistoryAnalytics!]! 
+  overviewMetrics: OverviewMetrics! 
+  nextPageToken: String 
+  hasMorePages: Boolean! 
+} 
+
+type AnalyticsMetadata {
+  requestTimestamp: String! 
+} 
+
+type HistoryAnalytics {
+  timestamp: String! 
+  visitors: Int! 
+  pageViews: Int! 
+  bounceRate: Float! 
+  avgSessionDuration: Float! 
+} 
+
+type OverviewMetrics {
+  totalVisitors: Int! 
+  totalPageViews: Int! 
+  avgBounceRate: Float! 
+  avgSessionDuration: Float! 
+  totalSessions: Int! 
+  pagesPerSession: Float! 
+} 
+
+input LogAnalyticsEventInput {
+  eventId: ID! 
+  timestamp: String! 
+  userId: ID! 
+  eventType: AnalyticsEventType!
+  pageUrl: String! 
+  referrer: String 
+  userAgent: String 
+  ipAddress: String 
+} 
+
+enum AnalyticsEventType {
+  PAGE_VIEW
+  CLICK
+  SCROLL
+}
+
+type LogAnalyticsEventPayload {
+  success: Boolean!
+  message: String
+  errors: [Error!]
+} 
+
+type RealtimeAnalyticsPayload {
+  timestamp: String! 
+  visitors: Int! 
+  pageViews: Int! 
+  bounceRate: Float! 
+} 
+
+"""
+Notification
+""" 
+input ReportServiceErrorInput {
+  timestamp: String! 
+  serviceName: String! 
+  errorMessage: String! 
+} 
+
+type ReportServiceErrorPayload {
+  success: Boolean!
+  message: String
   errors: [Error!]
 } 
 
