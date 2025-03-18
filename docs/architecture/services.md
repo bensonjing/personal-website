@@ -58,15 +58,14 @@
   - sendNotification: send website owner an email when an error event is sent to Notification Service - Kafka 
 - API Gateway: synchronous request/response - GraphQL
 <!-- TODO: rewrite those endpoint definition using GraphQL -->
-  - GET /status 
-  - GET /metrics 
+  - GET /Health: health check API
+  - GET /metrics
   - GET /cms/project 
   - GET /cms/project/{id} 
   - POST /cms/project 
   - PATCH /cms/project/{id} 
   - DELETE /cms/project/{id} 
-  - POST /auth/login
+  - POST /auth/login: OAuth 2.0 (self hosted service) with JWT for authentication + authorization
   - POST /auth/logout
-  - POST /auth/refresh
   - POST /analytics/log
   - GET /analytics

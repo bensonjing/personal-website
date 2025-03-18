@@ -1,0 +1,161 @@
+schema {
+  query: Query 
+  mutation: Mutation 
+  subscription: Subscription 
+}
+
+type Query {
+  health: Health! 
+  metrics: Metrics!
+  projects: [Project!]! 
+  project(id: ID!): Project 
+  historyAnalytics(timePreset: TimePreset!, pageSize: Int, pageToken: String): HistoryAnalytics!
+}
+
+type Mutation {
+  createProject(input: CreateProjectInput!): ProjectPayload!
+  updateProject(id: ID!, input: UpdateProjectInput!): ProjectPayload!
+  deleteProject(id: ID!): DeleteProjectPayload!
+
+  login(input: LoginInput!): LoginPayload!
+  logout: LogoutPayload!
+
+  logAnalyticsEvent(input: LogAnalyticsEventInput!): LogAnalyticsEventPayload!
+}
+
+type Subscription {
+  realtimeAnalyticsUpdated(): RealtimeAnalyticsPayload!
+  serviceErrorOccurred(): ServiceErrorPayload!
+}
+
+"""
+Health check endpoint to monitor system status 
+"""
+type Health {
+  status: SystemStatus! # Overall system status 
+  gateway: GatewayStatus! # Gateway service status 
+  services: [ServiceStatus!]! # Status of all services 
+}
+
+enum SystemStatus {
+  UP
+  DEGRADED
+  DOWN
+}
+
+type GatewayStatus {
+  status: SystemStatus!
+  version: String!
+  uptime: String! # Time since last restart ex. "72h" 
+} 
+
+interface ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+  uptime: String! # Time since last restart ex. "72h" 
+} 
+
+type RESTServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+} 
+
+type KafkaServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+  kafkaStatus: SystemStatus!
+  consumerLag: Int! # Number of unconsumed messages in Kafka topic 
+} 
+
+type GRPCServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+} 
+
+"""
+Metrics endpoint to monitor system performance 
+"""
+type Metrics {
+  timestamp: String! # Timestamp of the metrics 
+
+  # Hardware metrics
+  cpuUsage: Float! # CPU usage percentage 
+  memoryUsage: Float! # Memory usage percentage 
+  diskUsage: Float! # Disk usage percentage 
+  networkUsage: Float! # Network usage percentage 
+
+  # Performance metrics
+  requestRate: Float! # Requests per second 
+  errorRate: Float! # Error rate percentage 
+  responseTime: Float! # Average response time in ms 
+  cacheHitRate: Float! # Cache hit rate percentage 
+  activeConnections: Int! # Number of active connections 
+
+  # Security metrics
+  rateLimitUsage: Int! # Number of requests that hit rate limit 
+  unauthorizedRequests: Int! # Number of unauthorized requests 
+  maliciousRequests: Int! # Number of malicious requests 
+
+  # Service metrics
+  serviceMetrics: [ServiceMetrics!]! # Metrics for each service 
+}
+
+type ServiceMetrics {
+  name: String!
+  responseTime: Float! # Average response time in ms 
+  errorRate: Float! # Error rate percentage 
+  requestRate: Float! # Requests per second 
+  activeConnections: Int! # Number of active connections 
+}
+
+"""
+Project resource 
+"""
+type Project {
+  id: ID!
+  title: String!
+  description: String
+  published: Boolean!
+  publicationDate: String
+  thumbnail: Image
+  content: String 
+  images: [Image!]!
+}
+
+type Image {
+  url: String!
+  altText: String
+}
+
+input ProjectInput {
+  title: String!
+  description: String
+  published: Boolean! 
+  publicationDate: String
+  thumbnail: Image 
+  content: String 
+  images: [Image!]!
+}
+
+type ProjectPayload {
+  success: Boolean!
+  message: String
+  project: Project
+  errors: [Error!]
+} 
+
+type DeleteProjectPayload {
+  success: Boolean!
+  message: String
+  id: ID 
+  errors: [Error!]
+} 
+
+type Error {
+  code: String!
+  message: String!
+}
