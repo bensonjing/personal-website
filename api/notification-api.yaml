@@ -1,0 +1,68 @@
+# notification-api.yaml
+#
+# This file defines the AsyncAPI specification for Notification APIs.
+# 1. sendNotification: Consume error event from Kafka and send an email to the website owner
+
+asyncapi: 3.0.0
+info: 
+  title: Notification API
+  version: 1.0.0
+  description: API for sending notifications to the website owner
+  termsOfService: https://www.{server}/terms
+  contact: 
+    name: API Support
+    url: https://www.{server}/support
+    email: support@{server}
+  license: 
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers: 
+  development: 
+    url: dev.kafka.v1.{server}
+    description: Development Kafka broker 
+    protocol: kafka
+  staging: 
+    url: staging.kafka.v1.{server}
+    description: Staging Kafka broker 
+    protocol: kafka
+  production: 
+    url: kafka.v1.{server}
+    description: Production Kafka broker 
+    protocol: kafka
+
+channels: 
+  service-error: 
+    subscribe: 
+      title: Service Error 
+      description: Service error event consumed from Kafka broker sent by API Gateway 
+      messages: 
+        serviceError: 
+          $ref: '#/components/messages/ServiceError'
+    bindings: 
+      kafka: 
+        topic: service-error
+
+components: 
+  messages: 
+    ServiceError: 
+      name: ServiceError
+      summary: Service error event consumed from Kafka broker sent by API Gateway 
+      contentType: application/json
+      payload: 
+        type: object 
+        required: 
+          - timestamp 
+          - serviceName 
+          - errorMessage 
+        properties: 
+          timestamp: 
+            type: string 
+            format: date-time 
+            description: Timestamp of the error event 
+          serviceName: 
+            type: string 
+            description: Name of the service that sent the error event 
+          errorMessage: 
+            type: string
+            description: Error message from the service 
