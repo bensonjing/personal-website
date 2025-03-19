@@ -1,36 +1,42 @@
 # analytics-api.yaml
 #
-# This file defines the AsyncAPI specification for Analytics APIs.
-# 1. logEvent: Log user interaction events (page views, clicks, scrolls)
-# 2. getRealtimeAnalytics: Get real-time analytics data (visitors, page views, bounce rate)
-# Both APIs are Kafka-based
+# This file defines Kafka-based Analytics APIs using AsyncAPI specification 
+# 1. logEvent 
+#   - Description: Log user interaction events (page views, clicks, scrolls)
+#   - Producer: API Gateway 
+#   - Consumer: Analytics Service 
+# 
+# 2. getRealtimeAnalytics
+#   - Description: Get real-time analytics data (visitors, page views, bounce rate)
+#   - Producer: Analytics Service 
+#   - Consumer: API Gateway 
 
 asyncapi: 3.0.0
 info: 
   title: Analytics API
   version: 1.0.0 
-  description: Kafka-based analytics API for receiving Analytics events and returning real-time analytics data 
-  termsOfService: https://www.{server}/terms
+  description: Kafka-based Analytics API 
+  termsOfService: https://www.{domain}/terms
   contact: 
     name: API Support
-    url: https://www.{server}/support
-    email: support@{server}
+    url: https://www.{domain}/support
+    email: support@{domain}
   license: 
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: The MIT License
     identifier: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers: 
   development: 
-    url: dev.kafka.v1.{server}
+    url: kafka.dev.{domain}/v1
     description: Development Kafka broker 
     protocol: kafka
   staging: 
-    url: staging.kafka.v1.{server}
+    url: kafka.staging.{domain}/v1
     description: Staging Kafka broker 
     protocol: kafka
   production: 
-    url: kafka.v1.{server}
+    url: kafka.{domain}/v1
     description: Production Kafka broker 
     protocol: kafka
 
@@ -38,7 +44,7 @@ channels:
   analytics-events: 
     subscribe: 
       title: Analytics Event 
-      description: Analytics event consumed from Kafka broker sent by API Gateway 
+      description: The kafka topic that contains Analytics Events
       messages: 
         analyticsEvent: 
           $ref: '#/components/messages/AnalyticsEvent' 
@@ -49,7 +55,7 @@ channels:
   analytics-realtime: 
     publish: 
       title: Analytics Realtime 
-      description: Realtime analytics data sent to Kafka broker and consumed by API Gateway 
+      description: The kafka topic that contains Realtime Analytics Data
       messages: 
         realtimeAnalytics: 
           $ref: '#/components/messages/RealtimeAnalytics'
@@ -106,7 +112,7 @@ components:
     RealtimeAnalytics: 
       name: RealtimeAnalytics
       title: Realtime Analytics 
-      summary: Realtime analytics data sent to Kafka broker and consumed by API Gateway 
+      summary: Realtime Analytics event data in Kafka topic
       contentType: application/json
       payload: 
         type: object 
