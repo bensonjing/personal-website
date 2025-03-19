@@ -1,0 +1,399 @@
+"""
+api-gateway-api.graphql
+
+This file defines the GraphQL API for the API Gateway.
+"""
+
+schema {
+  query: Query 
+  mutation: Mutation 
+  subscription: Subscription 
+}
+
+"""
+Queries for the API Gateway
+- health: Check the health of the API Gateway
+- metrics: Get the performance metrics of the API Gateway
+- projects: Get the Project List of the API Gateway
+- project: Get a Project by id
+- historyAnalytics: Get the history analytics 
+"""
+type Query {
+  health: Health! 
+  metrics: Metrics!
+  projects: [Project!]! 
+  project(id: ID!): Project 
+  historyAnalytics(timePreset: TimePreset!): HistoryAnalyticsPayload!
+}
+
+"""
+Mutations for the API Gateway
+- createProject: Create a new Project
+- updateProject: Update a Project
+- deleteProject: Delete a Project
+- login: Login to the API Gateway
+- logout: Logout from the API Gateway
+- refreshToken: Refresh the token
+- logAnalyticsEvent: Log an analytics event
+- reportServiceError: Report a service error (for frontend error tracking)
+"""
+type Mutation {
+  createProject(input: CreateProjectInput!): ProjectPayload!
+  updateProject(id: ID!, input: UpdateProjectInput!): ProjectPayload!
+  deleteProject(id: ID!): DeleteProjectPayload!
+
+  login(input: LoginInput!): AuthPayload!
+  logout: LogoutPayload!
+  refreshToken(refreshToken: String!): AuthPayload!
+
+  logAnalyticsEvent(input: LogAnalyticsEventInput!): LogAnalyticsEventPayload!
+  reportServiceError(input: ReportServiceErrorInput!): ReportServiceErrorPayload!
+}
+
+"""
+Subscriptions for the API Gateway
+- realtimeAnalyticsUpdated: Get the realtime analytics updated
+"""
+type Subscription {
+  realtimeAnalyticsUpdated: RealtimeAnalyticsPayload!
+}
+
+enum TimePreset {
+  LAST_24_HOURS
+  LAST_7_DAYS
+  LAST_30_DAYS
+  LAST_3_MONTHS
+  LAST_12_MONTHS
+  LAST_24_MONTHS
+}
+
+"""
+Health check endpoint to monitor system status 
+- status: The overall system status
+- gateway: The gateway service status
+- services: The status of other services
+"""
+type Health {
+  status: SystemStatus! # Overall system status 
+  gateway: GatewayStatus! # Gateway service status 
+  services: [ServiceStatus!]! # Status of all services 
+}
+
+enum SystemStatus {
+  UP
+  DEGRADED
+  DOWN
+}
+
+type GatewayStatus {
+  status: SystemStatus!
+  version: String!
+  uptime: String! # Time since last restart ex. "72h" 
+} 
+
+interface ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+  uptime: String! # Time since last restart ex. "72h" 
+} 
+
+type RESTServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+} 
+
+type KafkaServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+  uptime: String! # Time since last restart ex. "72h" 
+  kafkaStatus: SystemStatus!
+  consumerLag: Int! # Number of unconsumed messages in Kafka topic 
+} 
+
+type GRPCServiceStatus implements ServiceStatus {
+  name: String!
+  status: SystemStatus!
+  protocol: Protocol! 
+} 
+
+enum Protocol {
+  REST
+  GRPC
+  KAFKA
+}
+
+"""
+Metrics endpoint to monitor system performance 
+Hardware metrics:
+- timestamp: The timestamp of the metrics
+- cpuUsage: The CPU usage percentage
+- memoryUsage: The memory usage percentage
+- diskUsage: The disk usage percentage
+- networkUsage: The network usage percentage
+
+Performance metrics:
+- requestRate: The number of requests per second
+- errorRate: The percentage of requests that resulted in an error
+- responseTime: The average response time in milliseconds
+- cacheHitRate: The percentage of requests that were served from cache
+- activeConnections: The number of active connections
+
+Security metrics:
+- rateLimitUsage: The number of requests that hit rate limit
+- unauthorizedRequests: The number of unauthorized requests
+- maliciousRequests: The number of malicious requests
+
+Service metrics:
+- serviceMetrics: The metrics of other services
+"""
+type Metrics {
+  timestamp: String! 
+  cpuUsage: Float! 
+  memoryUsage: Float! 
+  diskUsage: Float! 
+  networkUsage: Float! 
+  requestRate: Float! 
+  errorRate: Float! 
+  responseTime: Int! 
+  cacheHitRate: Float! 
+  activeConnections: Int! 
+  rateLimitUsage: Int! 
+  unauthorizedRequests: Int! 
+  maliciousRequests: Int! 
+  serviceMetrics: [ServiceMetrics!]! 
+}
+
+"""
+Service metrics:
+- name: The name of the service
+- responseTime: The average response time in milliseconds
+- errorRate: The percentage of requests that resulted in an error
+- requestRate: The number of requests per second
+- activeConnections: The number of active connections
+- uptime: The uptime of the service
+"""
+type ServiceMetrics {
+  name: String!
+  responseTime: Float! 
+  errorRate: Float! 
+  requestRate: Float! 
+  activeConnections: Int! 
+  uptime: String! 
+}
+
+"""
+Content Management Service 
+"""
+type Project {
+  id: ID!
+  title: String!
+  description: String
+  published: Boolean!
+  publicationDate: String
+  thumbnail: Image
+  content: String 
+  images: [Image!]!
+}
+
+type Image {
+  url: String!
+  altText: String
+}
+
+input CreateProjectInput {
+  title: String!
+  description: String
+  published: Boolean! 
+  publicationDate: String
+  thumbnail: ImageInput
+  content: String 
+  images: [ImageInput!]!
+}
+
+input UpdateProjectInput {
+  title: String
+  description: String
+  published: Boolean
+  publicationDate: String
+  thumbnail: ImageInput
+  content: String
+  images: [ImageInput!]
+} 
+
+input ImageInput {
+  url: String!
+  altText: String
+}
+
+type ProjectPayload {
+  success: Boolean!
+  message: String
+  project: Project
+  errors: [Error!]
+} 
+
+type DeleteProjectPayload {
+  success: Boolean!
+  message: String
+  id: ID 
+  errors: [Error!]
+} 
+
+"""
+Authentication
+"""
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+"""
+Authentication payload
+- success: Whether the login was successful
+- message: The message of the login
+- accessToken: The access token
+- refreshToken: The refresh token
+- expiresIn: The expiration time of the access token  
+- tokenType: The type of the token (Bearer)
+- user: The user details
+- errors: The errors of the login if any
+"""
+type AuthPayload {
+  success: Boolean!
+  message: String
+  accessToken: String
+  refreshToken: String
+  expiresIn: Int
+  tokenType: String
+  user: User
+  errors: [Error!]
+}
+
+type LogoutPayload {
+  success: Boolean!
+  message: String
+  errors: [Error!]
+}
+
+type User {
+  id: ID!
+  email: String!
+  role: UserRole!
+  name: String
+}
+
+enum UserRole {
+  ADMIN
+  VISITOR
+}
+
+"""
+Analytics
+""" 
+
+"""
+History analytics payload
+- metadata: The metadata of the history analytics
+- historyAnalytics: A list of history analytics based on aggregation defined in the request by timePreset
+- overviewMetrics: The overview metrics
+"""
+type HistoryAnalyticsPayload {
+  metadata: AnalyticsMetadata! 
+  historyAnalytics: [HistoryAnalytics!]! 
+  overviewMetrics: OverviewMetrics! 
+} 
+
+type AnalyticsMetadata {
+  requestTimestamp: String! 
+} 
+
+type HistoryAnalytics {
+  timestamp: String! 
+  visitors: Int! 
+  pageViews: Int! 
+  bounceRate: Float! 
+  avgSessionDuration: Float! 
+} 
+
+type OverviewMetrics {
+  totalVisitors: Int! 
+  totalPageViews: Int! 
+  avgBounceRate: Float! 
+  avgSessionDuration: Float! 
+} 
+
+"""
+Log analytics event input
+- eventId: The id of the event
+- timestamp: The timestamp of the event
+- userId: The id of the user
+- eventType: The type of the event
+- pageUrl: The url of the page
+- referrer: The referrer of the page
+- userAgent: The user agent of the event
+- ipAddress: The ip address of the event
+"""
+input LogAnalyticsEventInput {
+  eventId: ID! 
+  timestamp: String! 
+  userId: ID! 
+  eventType: AnalyticsEventType!
+  pageUrl: String! 
+  referrer: String 
+  userAgent: String 
+  ipAddress: String 
+} 
+
+enum AnalyticsEventType {
+  PAGE_VIEW
+  CLICK
+  SCROLL
+}
+
+type LogAnalyticsEventPayload {
+  success: Boolean!
+  message: String
+  errors: [Error!]
+} 
+
+type RealtimeAnalyticsPayload {
+  timestamp: String! 
+  visitors: Int! 
+  pageViews: Int! 
+  bounceRate: Float! 
+} 
+
+"""
+Notification
+""" 
+
+"""
+Report service error input
+- timestamp: The timestamp of the error
+- serviceName: The name of the service
+- errorMessage: The error message
+"""
+input ReportServiceErrorInput {
+  timestamp: String! 
+  serviceName: String! 
+  errorMessage: String! 
+} 
+
+type ReportServiceErrorPayload {
+  success: Boolean!
+  message: String
+  errors: [Error!]
+} 
+
+"""
+Error
+- code: The code of the error
+- message: The message of the error
+"""
+type Error {
+  code: String!
+  message: String!
+}

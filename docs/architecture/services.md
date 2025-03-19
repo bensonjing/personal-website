@@ -51,22 +51,21 @@
   - PATCH /cms/project/{id} 
   - DELETE /cms/project/{id} 
 - Analytics Service: 
-  - getRealTimeAnalytics(): retrieve real-time analytics data using server streaming gRPC
+  - getRealTimeAnalytics(): retrieve real-time analytics data - Kafka
   - getHistoryAnalytics(): retrieve historial analytics data up to 24 months using uniary gRPC
-  - logAnalytics(): log an events using asynchronous messaging API - RabbitMQ
+  - logAnalytics(): log an events using asynchronous messaging API - Kafka
 - Notification Service: 
-  - sendNotification: asynchronous one-way notification API (The notification in API name means the notificatin sends to the owner. The one-way notification means how other services call Notification service. they does not represent the same thing)
+  - sendNotification: send website owner an email when an error event is sent to Notification Service - Kafka 
 - API Gateway: synchronous request/response - GraphQL
 <!-- TODO: rewrite those endpoint definition using GraphQL -->
-  - GET /status 
-  - GET /metrics 
+  - GET /Health: health check API
+  - GET /metrics
   - GET /cms/project 
   - GET /cms/project/{id} 
   - POST /cms/project 
   - PATCH /cms/project/{id} 
   - DELETE /cms/project/{id} 
-  - POST /auth/login
+  - POST /auth/login: OAuth 2.0 (self hosted service) with JWT for authentication + authorization
   - POST /auth/logout
-  - POST /auth/refresh
   - POST /analytics/log
   - GET /analytics

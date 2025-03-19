@@ -1,32 +1,36 @@
 /**
  * analytics-api.proto
  * 
- * Protocal Buffer definition for the Analytics Service API
- * The Analytics Service provides real-time and historical analytics data for website traffic monitoring. It offers two main endpoints: 
- * 1. GetRealTimeAnalytics: Retrieves real-time analytics data for the current time period
- * 2. GetHistoryAnalytics: Retrieves historical analytics data for different time periods
+ * This file defines the gRPC API for the Analytics Service using Protocol Buffers.
  */
 
 syntax = "proto3";
 
 package analytics.v1;
 
+/**
+ * AnalyticsService: 
+ *   - Description: The gRPC service for the Analytics Service
+ *   - Methods:
+ *     - GetHistoryAnalytics: Retrieves historical analytics data for different time periods
+ */
 service AnalyticsService {
-  rpc GetRealTimeAnalytics(RealTimeRequest) returns (stream RealTimeResponse) {}
-  rpc GetHistoryAnalytics(HistoryRequest) returns (stream HistoryResponse) {}
+  rpc GetHistoryAnalytics(HistoryRequest) returns (HistoryResponse) {}
 }
 
-message RealTimeRequest {
-  int32 update_interval = 1; // Refresh interval in seconds (default: 5s) 
-}
-
-message RealTimeResponse {
-  string timestamp = 1; // Timestamp of the data point 
-  int32 visitors = 2; // Number of visitors
-  int32 page_views = 3; // Page views 
-  float bounce_rate = 4; // Bounce rate
-} 
-
+/**
+ * HistoryRequest: 
+ *   - Description: Request message for historical analytics data
+ *   - Fields:
+ *     - time_preset: The time period for which to retrieve analytics data. The 
+ *       server determines the aggregation based on the time_preset. Example:
+ *       - LAST_24_HOURS: Aggregates data by hour
+ *       - LAST_7_DAYS: Aggregates data by day
+ *       - LAST_30_DAYS: Aggregates data by day
+ *       - LAST_3_MONTHS: Aggregates data by month
+ *       - LAST_12_MONTHS: Aggregates data by month
+ *       - LAST_24_MONTHS: Aggregates data by month
+ */
 message HistoryRequest {
   enum TimePreset {
     LAST_24_HOURS = 0;
@@ -38,36 +42,62 @@ message HistoryRequest {
   }
 
   TimePreset time_preset = 1;
-
-  int32 page_size = 2; // Number of data points on each page 
-  string page_token = 3; // Token to fetch the next page of data 
 }
 
+/**
+ * HistoryResponse: 
+ *   - Description: The response containing the History Analytics data and the overview metrics.
+ *   - Fields:
+ *     - metadata: Metadata about the request
+ *     - history_analytics: List of History Analytics for each aggregation
+ *     - overview_metrics: Overview metrics for the time period
+ */
 message HistoryResponse {
   Metadata metadata = 1;
   repeated HistoryAnalytics history_analytics = 2; 
   OverviewMetrics overview_metrics = 3; 
-  string next_page_token = 4; 
-  bool has_more_page = 5; 
 } 
 
+/**
+ * HistoryAnalytics: 
+ *   - Description: The history analytics data for a specific time period
+ *   - Fields:
+ *     - timestamp: The timestamp of the data point in ISO 8601 format
+ *     - visitors: The number of visitors
+ *     - page_views: The number of page views
+ *     - bounce_rate: The bounce rate
+ *     - avg_session_duration: The average session duration
+ */
 message HistoryAnalytics {
-  string timestamp = 1; // ISO 8601 Timestamp of the data point 
-  int32 visitors = 2; // Number of visitors
-  int32 page_views = 3; // Page views 
-  float bounce_rate = 4; // Bounce rate
-  float avg_session_duration = 5; // Average session duration
+  string timestamp = 1; 
+  int32 visitors = 2; 
+  int32 page_views = 3;
+  float bounce_rate = 4;
+  float avg_session_duration = 5;
 } 
 
+/**
+ * OverviewMetrics: 
+ *   - Description: The overview metrics for the time period
+ *   - Fields:
+ *     - total_visitors: The total number of visitors
+ *     - total_page_views: The total number of page views
+ *     - avg_bounce_rate: The average bounce rate
+ *     - avg_session_duration: The average session duration
+ */
 message OverviewMetrics {
   int32 total_visitors = 1; 
   int32 total_page_views = 2; 
   float avg_bounce_rate = 3; 
   float avg_session_duration = 4; 
-  int32 total_sessions = 5; 
-  float pages_per_session = 6; 
 } 
 
+/**
+ * Metadata: 
+ *   - Description: The metadata about the request
+ *   - Fields:
+ *     - request_timestamp: The timestamp of the request in ISO 8601 format
+ */
 message Metadata {
-  string request_timestamp = 1; // When was the request made 
+  string request_timestamp = 1; 
 } 
